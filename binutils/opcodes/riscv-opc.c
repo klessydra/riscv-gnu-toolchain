@@ -1825,6 +1825,30 @@ const struct riscv_opcode riscv_opcodes[] =
 {"hsv.w",       0, INSN_CLASS_H, "t,0(s)", MATCH_HSV_W, MASK_HSV_W, match_opcode, INSN_DREF|INSN_4_BYTE },
 {"hsv.d",      64, INSN_CLASS_H, "t,0(s)", MATCH_HSV_D, MASK_HSV_D, match_opcode, INSN_DREF|INSN_8_BYTE },
 
+/* Klessydra Extensions */
+
+/* Vector Extensions */
+{"kmemld",     0, INSN_CLASS_I,  "d,s,t",  MATCH_K_MEMLD , MASK_K_MEM , match_opcode, 0 },
+{"kmemstr",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_MEMSTR, MASK_K_MEM, match_opcode, 0 },
+{"kbcastld",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_BCASTLD , MASK_K_MEM , match_opcode, 0 },
+{"kaddv",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_ADDV, MASK_K_ARITH, match_opcode, 0 },
+{"ksubv",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SUBV, MASK_K_ARITH, match_opcode, 0 },
+{"kvmul",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_VMUL, MASK_K_ARITH, match_opcode, 0 },
+{"kvred",      0, INSN_CLASS_I,  "d,s",    MATCH_K_VRED, MASK_K_ARITH | MASK_RS2, match_opcode, 0 },
+{"kdotp",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_DOTP , MASK_K_ARITH, match_opcode, 0 },
+{"ksvaddsc",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVADDSC, MASK_K_ARITH, match_opcode, 0 },
+{"ksvaddrf",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVADDRF, MASK_K_ARITH, match_opcode, 0 },
+{"ksvmulsc",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVMULSC, MASK_K_ARITH, match_opcode, 0 },
+{"ksvmulrf",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVMULRF, MASK_K_ARITH, match_opcode, 0 },
+{"ksrav",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SRAV, MASK_K_ARITH, match_opcode, 0 },
+{"ksrlv",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SRLV, MASK_K_ARITH, match_opcode, 0 },
+{"kbcast",     0, INSN_CLASS_I,  "d,s",    MATCH_K_BCAST, MASK_K_ARITH | MASK_RS2, match_opcode, 0 },
+{"krelu",      0, INSN_CLASS_I,  "d,s",    MATCH_K_RELU, MASK_K_ARITH | MASK_RS2, match_opcode, 0 },
+{"kvslt",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_VSLT, MASK_K_ARITH, match_opcode, 0 },
+{"ksvslt",     0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVSLT, MASK_K_ARITH, match_opcode, 0 },
+{"kdotpps",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_DOTPPS, MASK_K_ARITH, match_opcode, 0 },
+{"kvcp",       0, INSN_CLASS_I,  "d,s",    MATCH_K_VCP, MASK_K_ARITH | MASK_RS2, match_opcode, 0 },
+
 /* Terminate the list.  */
 {0, 0, INSN_CLASS_NONE, 0, 0, 0, 0, 0}
 };
