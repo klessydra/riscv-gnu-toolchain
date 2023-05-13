@@ -4945,3 +4945,6 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
+sed -i 's/srcdir) && //#srcdir) && //g' Makefile
+sed -i 's/^flock \`git/#flock \`git/g' Makefile
+
