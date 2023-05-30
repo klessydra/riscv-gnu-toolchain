@@ -3,6 +3,11 @@ RISC-V GNU Toolchain with the Klessydra Instruction Extensions
 
 This README provides instructions on how to install and build the RISC-V GNU-compiler Toolchain with the Klessydra instruction extensions. This extension enables the execution of vector operations in SIMD/MIMD fashion inside the [Klessydra Vector Coprocessing Unit (VCU)](https://github.com/klessydra/pulpino-klessydra). For more information on how to use these instructions, please refer to the [Klessydra Technical Manual](https://github.com/klessydra/pulpino-klessydra/blob/master/doc/Klessydra/Klessydra%20Technical%20Manual%20v11.1%20May%202020.pdf).
 
+## Prerequisites
+Several standard packages are needed to build the toolchain. On Ubuntu, you can install them executing the following command:
+
+    sudo apt-get install git cmake python-yaml tcsh autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
+
 ##  Installation
 To install the RISC-V toolchain with Klessydra instruction extension, please follow the steps below:
    1. Clone this repository to your local machine:     
