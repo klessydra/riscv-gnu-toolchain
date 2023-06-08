@@ -40,10 +40,8 @@ To install the RISC-V toolchain with Klessydra instruction extension, please fol
     ./path/to/install/bin/make_links.sh
          
 ## Usage
-   To use the RISC-V toolchain with Klessydra instruction extension, simply add the **bin** installation directory to your PATH environment variable. For example, if you installed the toolchain to **/opt/riscv-klessydra**, add the following line to your **.bashrc** file:    
+   To use the RISC-V toolchain with Klessydra instruction extension, simply add the **bin** installation directory to your PATH environment variable. For example, if you installed the toolchain to **/opt/riscv-klessydra**, add the following line to your **.bashrc** file in your home directory:
    
     export PATH=$PATH:/opt/riscv-klessydra/bin  
     
-Now if you want to test the toolchain, execute the commands as such in a terminal: klessydra-unknown-elf-... (e.g. klessydra-unknown-elf-gcc -c file.c -o file.o)
-    
-
+Now if you want to test for example the riscv gcc compiler in the toolchain, you can execute the following command "klessydra-unknown-elf-gcc -c file.c -o file.o"
