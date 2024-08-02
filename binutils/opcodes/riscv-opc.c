@@ -1848,6 +1848,18 @@ const struct riscv_opcode riscv_opcodes[] =
 {"ksvslt",     0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVSLT, MASK_K_ARITH, match_opcode, 0 },
 {"kdotpps",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_DOTPPS, MASK_K_ARITH, match_opcode, 0 },
 {"kvcp",       0, INSN_CLASS_I,  "d,s",    MATCH_K_VCP, MASK_K_ARITH | MASK_RS2, match_opcode, 0 },
+{"kvdiv",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_VDIV,MASK_K_ARITH, match_opcode, 0 },
+{"ksvdivrf",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVDIVRF, MASK_K_ARITH, match_opcode, 0 },
+{"ksvdivsc",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVDIVSC, MASK_K_ARITH, match_opcode, 0 },
+{"kvrem",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_VREM, MASK_K_ARITH, match_opcode, 0 },
+{"ksvremrf",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVREMRF, MASK_K_ARITH, match_opcode, 0 },
+{"ksvremsc",   0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVREMSC, MASK_K_ARITH, match_opcode, 0 },
+{"kvmulps",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_VMULPS,  MASK_K_ARITH, match_opcode, 0 },
+{"ksvmulpssc",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVMULPSSC,  MASK_K_ARITH, match_opcode, 0 },
+{"ksvmulpsrf",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_SVMULPSRF,  MASK_K_ARITH, match_opcode, 0 },
+{"kdotps",    0, INSN_CLASS_I,  "d,s,t",  MATCH_K_DOTPS,  MASK_K_ARITH, match_opcode, 0 },
+{"kaddvclip",      0, INSN_CLASS_I,  "d,s,t",  MATCH_K_ADDVCLIP, MASK_K_ARITH, match_opcode, 0 },
+
 
 /* Terminate the list.  */
 {0, 0, INSN_CLASS_NONE, 0, 0, 0, 0, 0}
