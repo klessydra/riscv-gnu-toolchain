@@ -1,0 +1,101 @@
+diff --git a/gcc/gcc/config.gcc b/gcc/gcc/config.gcc
+index c5064dd376..3219a23f11 100644
+--- a/gcc/gcc/config.gcc
++++ b/gcc/gcc/config.gcc
+@@ -517,7 +517,7 @@ pru-*-*)
+ 	;;
+ riscv*)
+ 	cpu_type=riscv
+-	extra_objs="riscv-builtins.o riscv-c.o riscv-sr.o riscv-shorten-memrefs.o"
++	extra_objs="riscv-builtins.o riscv-c.o riscv-sr.o riscv-shorten-memrefs.o riscv-kgpu.o"
+ 	d_target_objs="riscv-d.o"
+ 	;;
+ rs6000*-*-*)
+diff --git a/gcc/gcc/config/riscv/riscv-opts.h b/gcc/gcc/config/riscv/riscv-opts.h
+index 15bb5e7685..0b6cffa58b 100644
+--- a/gcc/gcc/config/riscv/riscv-opts.h
++++ b/gcc/gcc/config/riscv/riscv-opts.h
+@@ -67,6 +67,9 @@ enum stack_protector_guard {
+   SSP_GLOBAL			/* global canary */
+ };
+ 
++#define MASK_KGPU    (1 << 0)
++#define TARGET_KGPU  ((riscv_kgpu_ext & MASK_KGPU) != 0)
++
+ #define MASK_ZICSR    (1 << 0)
+ #define MASK_ZIFENCEI (1 << 1)
+ 
+diff --git a/gcc/gcc/config/riscv/riscv-protos.h b/gcc/gcc/config/riscv/riscv-protos.h
+index 20c2381c21..4c47057c26 100644
+--- a/gcc/gcc/config/riscv/riscv-protos.h
++++ b/gcc/gcc/config/riscv/riscv-protos.h
+@@ -94,6 +94,10 @@ extern std::string riscv_arch_str (bool version_p = true);
+ extern bool riscv_hard_regno_rename_ok (unsigned, unsigned);
+ 
+ rtl_opt_pass * make_pass_shorten_memrefs (gcc::context *ctxt);
++#ifdef TREE_CODE
++class gimple_opt_pass;
++void riscv_register_kgpu_pass (void);
++#endif
+ 
+ /* Information about one CPU we know about.  */
+ struct riscv_cpu_info {
+diff --git a/gcc/gcc/config/riscv/riscv.cc b/gcc/gcc/config/riscv/riscv.cc
+index 4939d9964d..612beb7281 100644
+--- a/gcc/gcc/config/riscv/riscv.cc
++++ b/gcc/gcc/config/riscv/riscv.cc
+@@ -57,6 +57,7 @@ along with GCC; see the file COPYING3.  If not see
+ #include "predict.h"
+ #include "tree-pass.h"
+ #include "opts.h"
++#include "riscv-subset.h"
+ 
+ /* True if X is an UNSPEC wrapper around a SYMBOL_REF or LABEL_REF.  */
+ #define UNSPEC_ADDRESS_P(X)					\
+@@ -5120,6 +5121,17 @@ riscv_option_override (void)
+       riscv_stack_protector_guard_offset = offs;
+     }
+ 
++  const riscv_subset_list *subset_list = riscv_current_subset_list ();
++  if (subset_list && subset_list->lookup ("xkgpu",
++					  RISCV_DONT_CARE_VERSION,
++					  RISCV_DONT_CARE_VERSION))
++    riscv_kgpu_ext |= MASK_KGPU;
++  else
++    riscv_kgpu_ext &= ~MASK_KGPU;
++
++  if (TARGET_KGPU)
++    riscv_register_kgpu_pass ();
++
+ }
+ 
+ /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
+diff --git a/gcc/gcc/config/riscv/riscv.opt b/gcc/gcc/config/riscv/riscv.opt
+index 492aad1232..c949d02740 100644
+--- a/gcc/gcc/config/riscv/riscv.opt
++++ b/gcc/gcc/config/riscv/riscv.opt
+@@ -209,6 +209,9 @@ int riscv_vector_elen_flags
+ TargetVariable
+ int riscv_zvl_flags
+ 
++TargetVariable
++int riscv_kgpu_ext
++
+ Enum
+ Name(isa_spec_class) Type(enum riscv_isa_spec_class)
+ Supported ISA specs (for use with the -misa-spec= option):
+diff --git a/gcc/gcc/config/riscv/t-riscv b/gcc/gcc/config/riscv/t-riscv
+index 19736b3a38..1e85702d0a 100644
+--- a/gcc/gcc/config/riscv/t-riscv
++++ b/gcc/gcc/config/riscv/t-riscv
+@@ -23,6 +23,10 @@ riscv-shorten-memrefs.o: $(srcdir)/config/riscv/riscv-shorten-memrefs.cc
+ 	$(COMPILE) $<
+ 	$(POSTCOMPILE)
+ 
++riscv-kgpu.o: $(srcdir)/config/riscv/riscv-kgpu.cc
++	$(COMPILE) $<
++	$(POSTCOMPILE)
++
+ PASSES_EXTRA += $(srcdir)/config/riscv/riscv-passes.def
+ 
+ $(common_out_file): $(srcdir)/config/riscv/riscv-cores.def \

@@ -270,10 +270,46 @@ else
 GCCPKGVER :=
 endif
 
+KGPU_PATCHES := $(sort $(wildcard $(srcdir)/patches/kgpu/*.patch))
+
 $(srcdir)/%/.git:
 	cd $(srcdir) && \
 	flock `git rev-parse --git-dir`/config git submodule init $(dir $@) && \
 	flock `git rev-parse --git-dir`/config git submodule update $(dir $@)
+
+stamps/apply-kgpu-patches: $(GCC_SRCDIR) $(GCC_SRC_GIT) $(KGPU_PATCHES)
+	@set -e; \
+	repo_root=$$(git -C $(GCC_SRCDIR) rev-parse --show-toplevel); \
+	if test -z "$(KGPU_PATCHES)"; then \
+		echo "No KGPU patches found under $(srcdir)/patches/kgpu; skipping."; \
+	else \
+		for p in $(KGPU_PATCHES); do \
+			if git -C $$repo_root apply --check $$p >/dev/null 2>&1; then \
+				echo "Applying $$p"; \
+				git -C $$repo_root apply $$p; \
+			elif git -C $$repo_root apply --reverse --check $$p >/dev/null 2>&1; then \
+				echo "Already applied $$p"; \
+			elif grep -q '^new file mode ' $$p; then \
+				missing=0; \
+				for f in $$(sed -n 's#^+++ b/##p' $$p); do \
+					if test ! -f $$repo_root/$$f; then \
+						missing=1; \
+						break; \
+					fi; \
+				done; \
+				if test $$missing -eq 0; then \
+					echo "Already applied $$p (new files present)."; \
+				else \
+					echo "ERROR: $$p does not apply cleanly in $$repo_root."; \
+					exit 1; \
+				fi; \
+			else \
+				echo "ERROR: $$p does not apply cleanly in $$repo_root."; \
+				exit 1; \
+			fi; \
+		done; \
+	fi
+	mkdir -p $(dir $@) && touch $@
 
 #
 # GLIBC
@@ -375,7 +411,7 @@ endif
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gcc-linux-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils-linux \
-                               stamps/build-linux-headers
+                               stamps/build-linux-headers stamps/apply-kgpu-patches
 	if test -f $</contrib/download_prerequisites && test "@NEED_GCC_EXTERNAL_LIBRARIES@" = "true"; then cd $< && ./contrib/download_prerequisites; fi
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
@@ -544,7 +580,8 @@ stamps/build-gdb-newlib: $(GDB_SRCDIR) $(GDB_SRC_GIT)
 	$(MAKE) -C $(notdir $@) install
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils-newlib
+stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils-newlib \
+                                stamps/apply-kgpu-patches
 	if test -f $</contrib/download_prerequisites && test "@NEED_GCC_EXTERNAL_LIBRARIES@" = "true"; then cd $< && ./contrib/download_prerequisites; fi
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
@@ -706,7 +743,7 @@ stamps/build-binutils-musl: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/check-
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gcc-musl-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils-musl \
-                               stamps/build-linux-headers
+                               stamps/build-linux-headers stamps/apply-kgpu-patches
 	if test -f $</contrib/download_prerequisites && test "@NEED_GCC_EXTERNAL_LIBRARIES@" = "true"; then cd $< && ./contrib/download_prerequisites; fi
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)

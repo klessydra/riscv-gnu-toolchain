@@ -1,0 +1,149 @@
+diff --git a/gcc/gcc/config/riscv/riscv-kgpu.cc b/gcc/gcc/config/riscv/riscv-kgpu.cc
+new file mode 100644
+index 0000000000..d1a4434364
+--- /dev/null
++++ b/gcc/gcc/config/riscv/riscv-kgpu.cc
+@@ -0,0 +1,143 @@
++#define IN_TARGET_CODE 1
++
++#include "config.h"
++#include "system.h"
++#include "coretypes.h"
++#include "tm.h"
++#include "basic-block.h"
++#include "function.h"
++#include "cfg.h"
++#include "dominance.h"
++#include "backend.h"
++#include "tree.h"
++#include "gimple.h"
++#include "gimple-iterator.h"
++#include "tree-pass.h"
++#include "context.h"
++#include "riscv-protos.h"
++
++namespace {
++
++static unsigned long long kgpu_label_uid;
++
++const pass_data kgpu_pass_data = {
++  GIMPLE_PASS,
++  "kgpu-pass",
++  OPTGROUP_NONE,
++  TV_NONE,
++  0,
++  0,
++  0,
++  0,
++  0
++};
++
++class pass_kgpu_placeholder : public gimple_opt_pass {
++public:
++  pass_kgpu_placeholder (gcc::context *ctxt)
++    : gimple_opt_pass (kgpu_pass_data, ctxt) {}
++
++  bool gate (function *fn) override {
++    return fn != nullptr;
++  }
++
++  unsigned int execute (function *fn) override {
++    if (!fn || !fn->cfg)
++      return 0;
++
++    calculate_dominance_info (CDI_POST_DOMINATORS);
++
++    struct kgpu_site
++    {
++      basic_block cond_bb;
++      basic_block merge_bb;
++      location_t loc;
++    };
++
++    auto_vec<kgpu_site, 16> sites;
++
++    basic_block bb;
++    FOR_ALL_BB_FN (bb, fn)
++      {
++        gimple_stmt_iterator last_gsi = gsi_last_bb (bb);
++        if (gsi_end_p (last_gsi))
++          continue;
++        gimple *last = gsi_stmt (last_gsi);
++        if (!last || gimple_code (last) != GIMPLE_COND)
++          continue;
++        if (EDGE_COUNT (bb->succs) != 2)
++          continue;
++
++        bool has_true_edge = false;
++        bool has_false_edge = false;
++        edge e;
++        edge_iterator ei;
++        FOR_EACH_EDGE (e, ei, bb->succs)
++          {
++            if (e->flags & EDGE_TRUE_VALUE)
++              has_true_edge = true;
++            if (e->flags & EDGE_FALSE_VALUE)
++              has_false_edge = true;
++          }
++        if (!has_true_edge || !has_false_edge)
++          continue;
++
++        basic_block ipdom = get_immediate_dominator (CDI_POST_DOMINATORS, bb);
++        if (!ipdom || ipdom == EXIT_BLOCK_PTR_FOR_FN (fn))
++          continue;
++
++        kgpu_site site = { bb, ipdom, gimple_location (last) };
++        sites.safe_push (site);
++      }
++
++    for (unsigned i = 0; i < sites.length (); ++i)
++      {
++        const kgpu_site &site = sites[i];
++        gimple_stmt_iterator cond_gsi = gsi_last_bb (site.cond_bb);
++        if (gsi_end_p (cond_gsi))
++          continue;
++        gimple *cond = gsi_stmt (cond_gsi);
++        if (!cond || gimple_code (cond) != GIMPLE_COND)
++          continue;
++
++        unsigned long long merge_uid = kgpu_label_uid++;
++        char before_if_buf[256];
++        char merge_buf[192];
++        snprintf (before_if_buf, sizeof (before_if_buf),
++                  "csrrwi x0, 0x7c0, 0x2\n\t1: auipc t0, %%%%pcrel_hi(.Lkgpu_merge_%llu)\n\taddi t0, t0, %%%%pcrel_lo(1b)\n\tcsrrwi x0, 0x7c0, 0x2",
++                  merge_uid);
++        snprintf (merge_buf, sizeof (merge_buf),
++                  ".ifndef .Lkgpu_merge_%llu\n\t.set .Lkgpu_merge_%llu, .\n\t.endif",
++                  merge_uid, merge_uid);
++
++        gasm *before_if = gimple_build_asm_vec (before_if_buf,
++                                                NULL, NULL, NULL, NULL);
++        gimple_asm_set_volatile (before_if, true);
++        gimple_set_location (before_if, site.loc);
++        gsi_insert_before (&cond_gsi, before_if, GSI_SAME_STMT);
++
++        gasm *merge_marker = gimple_build_asm_vec (merge_buf,
++                                                   NULL, NULL, NULL, NULL);
++        gimple_asm_set_volatile (merge_marker, true);
++        gimple_set_location (merge_marker, site.loc);
++        gimple_stmt_iterator gsi = gsi_after_labels (site.merge_bb);
++        gsi_insert_before (&gsi, merge_marker, GSI_SAME_STMT);
++      }
++
++    free_dominance_info (CDI_POST_DOMINATORS);
++    return 0;
++  }
++};
++
++}
++
++static gimple_opt_pass *make_pass_kgpu_placeholder (gcc::context *ctxt) {
++  return new pass_kgpu_placeholder (ctxt);
++}
++
++void riscv_register_kgpu_pass (void) {
++  opt_pass *pass = make_pass_kgpu_placeholder (g);
++  struct register_pass_info info = { pass, "optimized",
++                                     1, PASS_POS_INSERT_AFTER };
++  register_pass (&info);
++}
