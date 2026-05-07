@@ -7,8 +7,9 @@ This README provides instructions on how to install and build the RISC-V GNU-com
 Several standard packages are needed to build the toolchain. On Ubuntu, you can install them executing the following commands:
 
     sudo apt install python2.7
-    sudo apt install python-pip
-    pip2 install pyyaml
+    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+    sudo python2.7 get-pip.py
+    pip2 install pyyaml==5.4.1
     cd $(dirname $(which python2.7))
     sudo ln -s python2.7 python
     sudo apt-get install git cmake tcsh autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
